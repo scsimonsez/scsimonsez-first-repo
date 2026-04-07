@@ -1,12 +1,11 @@
 project:
   type: website
+  output-dir: docs
 website:
-  title: "Home"
+  title: "Simon Christensen"
   navbar:
-    title: Simon Christensen
+    title: Home
     right:
-      - text: Home
-        href: index.qmd
       - text: Final Project
         href: code_for_final.qmd
 format:
