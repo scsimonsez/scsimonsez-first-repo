@@ -35,6 +35,13 @@
     "text": "About this site\n\n1 + 1\n\n[1] 2"
   },
   {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Simon Christensen",
+    "section": "",
+    "text": "My First Website!"
+  },
+  {
     "objectID": "website/blog/second-post/index.html",
     "href": "website/blog/second-post/index.html",
     "title": "Second Post",
@@ -61,12 +68,5 @@
     "title": "Alicia",
     "section": "Experience",
     "text": "Experience\nWorkplace | Job title | April 20XX - present"
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Simon Christensen",
-    "section": "",
-    "text": "My First Website!"
   }
 ]
