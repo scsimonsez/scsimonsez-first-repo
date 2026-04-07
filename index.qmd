@@ -1,0 +1,14 @@
+---
+title: "Simon Christensen"
+about:
+  template: jolla
+  image: first_repo.jpeg
+  links:
+    - icon: github
+      text: GitHub
+      href: https://github.com/scsimonsez
+format:
+  html:
+    theme: cosmo
+---
+My First Website!

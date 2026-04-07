@@ -1,0 +1,6 @@
+---
+title: "Final Project"
+editor: visual
+---
+
+This page will contain my Math 437 final project.

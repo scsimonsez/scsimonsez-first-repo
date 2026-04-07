@@ -1,0 +1,26 @@
+project:
+  type: website
+output-dir: docs
+website:
+  title: "Home"
+  navbar:
+    title: Simon Christensen
+    right:
+      - text: Home
+        href: index.qmd
+      - text: Final Project
+        href: code_for_final.qmd
+format:
+  html:
+    backgroundcolor: "#e6f2ff"
+    fontcolor: "darkblue"
+    linkcolor: "black"
+    mainfont: "serif"
+    theme:
+      - cosmo
+      - brand
+    css: styles.css
+    toc: true
+
+
+
