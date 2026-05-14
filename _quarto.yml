@@ -7,7 +7,7 @@ website:
     title: Home
     right:
       - text: Final Project
-        href: code_for_final.qmd
+        href: math-437-project-template.qmd
 format:
   html:
     backgroundcolor: "#e6f2ff"

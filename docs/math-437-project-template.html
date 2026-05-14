@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Using Principal Components to Predict All Star Status from Batting Statistics – Simon Christensen</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-c6faae26c8ca7d9afd49728702cb7243.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a href="./index.html" class="navbar-brand navbar-brand-logo">
+    </a>
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">Home</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link active" href="./math-437-project-template.html" aria-current="page"> 
+<span class="menu-text">Final Project</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#packages-used-in-this-analysis" id="toc-packages-used-in-this-analysis" class="nav-link active" data-scroll-target="#packages-used-in-this-analysis">Packages Used In This Analysis</a></li>
+  <li><a href="#data-description" id="toc-data-description" class="nav-link" data-scroll-target="#data-description">Data Description</a></li>
+  <li><a href="#data-wrangling" id="toc-data-wrangling" class="nav-link" data-scroll-target="#data-wrangling">Data Wrangling</a></li>
+  <li><a href="#summary-and-exploratory-data-analysis" id="toc-summary-and-exploratory-data-analysis" class="nav-link" data-scroll-target="#summary-and-exploratory-data-analysis">Summary and Exploratory Data Analysis</a></li>
+  <li><a href="#motivation-and-context" id="toc-motivation-and-context" class="nav-link" data-scroll-target="#motivation-and-context">Motivation and Context</a></li>
+  <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a>
+  <ul class="collapse">
+  <li><a href="#limitations-and-future-work" id="toc-limitations-and-future-work" class="nav-link" data-scroll-target="#limitations-and-future-work">Limitations and Future Work</a></li>
+  </ul></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Using Principal Components to Predict All Star Status from Batting Statistics</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="packages-used-in-this-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="packages-used-in-this-analysis">Packages Used In This Analysis</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here) </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rsample)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidymodels)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Lahman)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>here<span class="sc">::</span><span class="fu">i_am</span>(<span class="st">"math-437-project-template.qmd"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Package</th>
+<th>Use</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><a href="https://github.com/jennybc/here_here">here</a></td>
+<td>to easily load and save data</td>
+</tr>
+<tr class="even">
+<td><a href="https://readr.tidyverse.org/">readr</a></td>
+<td>to import the CSV file data</td>
+</tr>
+<tr class="odd">
+<td><a href="https://dplyr.tidyverse.org/">dplyr</a></td>
+<td>to massage and summarize data</td>
+</tr>
+<tr class="even">
+<td><a href="https://rsample.tidymodels.org/">rsample</a></td>
+<td>to split data into training and test sets</td>
+</tr>
+<tr class="odd">
+<td><a href="https://ggplot2.tidyverse.org/">ggplot2</a></td>
+<td>to create nice-looking and informative graphs</td>
+</tr>
+<tr class="even">
+<td><a href="https://tidymodels.tidymodels.org">tidymodels</a></td>
+<td>for modeling and statistical analysis</td>
+</tr>
+<tr class="odd">
+<td><a href="https://tidyverse.tidyverse.org">tidyverse</a></td>
+<td>makes installing and loading tidyverse packages easy</td>
+</tr>
+<tr class="even">
+<td><a href="https://sabr.org/lahman-database/">Lahman</a></td>
+<td>contains pitching, hitting, fielding stats for MLB (1871 - 2024)</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-description" class="level2">
+<h2 class="anchored" data-anchor-id="data-description">Data Description</h2>
+<p>In Major League Baseball, in order to be an All Star, a player must be at the top of their game in all aspects of baseball. When it comes to hitting, there are many statistics that can be analyzed in order to determine just how good a player is. I created a data set from statistics pulled from <a href="https://baseballsavant.mlb.com/">Baseball Savant</a> that contains all hitters in 2018 that had at least 100 plate appearances and includes all significant batting statistics. Then I pulled the AllStarFull data set from the Lahman package and created a new variable in my ‘batting_2018’ data set that determined whether or not a player was an all star in 2018.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>batstats <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"batstats.csv"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="data-wrangling" class="level2">
+<h2 class="anchored" data-anchor-id="data-wrangling">Data Wrangling</h2>
+<p>This chunk involves the renaming of all the variable in my data set and joining together my data set with a new categorical variable labeled AllStar which has two classes; yes if the player was an all star and no if not.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>batting_2018 <span class="ot">&lt;-</span> batstats <span class="sc">|&gt;</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Name=</span><span class="st">"last_name, first_name"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">age=</span>player_age,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">hr=</span>home_run,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">k=</span>strikeout,</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">bb=</span>walk,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">avg=</span>batting_avg,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">slg=</span>slg_percent,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">obp=</span>on_base_percent,</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">ops=</span>on_base_plus_slg,</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">rbi=</span>b_rbi,</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">tb=</span>b_total_bases,</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">g=</span>b_game,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">r=</span>r_run,</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">sb=</span>r_total_stolen_base</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_replace_all</span>(Name, <span class="st">"</span><span class="sc">\\</span><span class="st">*"</span>, <span class="st">""</span>),  </span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_replace_all</span>(Name, <span class="st">","</span>, <span class="st">""</span>),     </span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_squish</span>(Name),</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">sapply</span>(<span class="fu">strsplit</span>(Name, <span class="st">" "</span>), <span class="cf">function</span>(x) {</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">paste</span>(<span class="fu">rev</span>(x), <span class="at">collapse =</span> <span class="st">" "</span>)</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>    }),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_to_lower</span>(Name),</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_replace_all</span>(Name, <span class="st">"[[:punct:]]"</span>, <span class="st">""</span>),</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name =</span> <span class="fu">str_replace_all</span>(Name, <span class="st">"</span><span class="sc">\\</span><span class="st">s+"</span>, <span class="st">""</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>allstars <span class="ot">&lt;-</span> AllstarFull <span class="sc">|&gt;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(playerID, yearID)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>people <span class="ot">&lt;-</span> People <span class="sc">|&gt;</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(playerID, nameFirst, nameLast) <span class="sc">|&gt;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">Name =</span> <span class="fu">paste</span>(nameFirst, nameLast))</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>allstars_named <span class="ot">&lt;-</span> allstars <span class="sc">|&gt;</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(yearID <span class="sc">==</span> <span class="dv">2018</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(people, <span class="at">by =</span> <span class="st">"playerID"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(Name, yearID) <span class="sc">|&gt;</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>()</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>clean_name <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_to_lower</span>() <span class="sc">|&gt;</span></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace_all</span>(<span class="st">"[[:punct:]]"</span>, <span class="st">""</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace_all</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">s+"</span>, <span class="st">""</span>)</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>allstars_named <span class="ot">&lt;-</span> allstars_named <span class="sc">|&gt;</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Name =</span> <span class="fu">clean_name</span>(Name))</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>allstar_names <span class="ot">&lt;-</span> <span class="fu">unique</span>(allstars_named<span class="sc">$</span>Name)</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>batting_2018 <span class="ot">&lt;-</span> batting_2018 <span class="sc">|&gt;</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">AllStar =</span> <span class="fu">ifelse</span>(Name <span class="sc">%in%</span> allstar_names, <span class="st">"Yes"</span>, <span class="st">"No"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>batting_2018<span class="sc">$</span>AllStar <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(batting_2018<span class="sc">$</span>AllStar)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>batting_split <span class="ot">&lt;-</span> <span class="fu">initial_split</span>(batting_2018,<span class="at">prop=</span><span class="fl">0.7</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>bat_train <span class="ot">&lt;-</span> <span class="fu">training</span>(batting_split)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>bat_test <span class="ot">&lt;-</span> <span class="fu">testing</span>(batting_split)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="summary-and-exploratory-data-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="summary-and-exploratory-data-analysis">Summary and Exploratory Data Analysis</h2>
+<p>When it comes to hitting ability, there are an abundance of factors to consider when trying to determine if a player is eligible to be an all star. My goal is to determine which variables are the most telling of how well a player performs at the plate and how that contributes to them being an all star. I included a total of 20 significant variables from age and at bats to home runs and OPS and I will use Exploratory Data Analysis (EDA) and Principal Component Analysis (PCA) to hopefully create a sufficient model that will not only reduce the dimensionality of my data by getting rid of unimportant variables, but also be sufficient at predicting all star status. Below is a graph showing the positive correlation between home runs and OPS while highlighting which players are all stars and not. This graph gives us a key insight into how correlated baseball data is, meaning most statistics in baseball are calculated using other statistics.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(batting_2018, <span class="fu">aes</span>(<span class="at">x =</span> hr, <span class="at">y =</span> ops, <span class="at">color =</span> AllStar)) <span class="sc">+</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"HR vs OPS colored by All-Star Status"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/Home Runs vs. OPS Highlighting All Stars-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Note that no all star has an OPS below 0.7. Also, note that this graph does show two players that are outliers, meaning they had many home runs or a very OPS and did not make the all star team. Consider the point furthest right on the graph as well as the point above the main portion of the data to the left of the all stars with the highest OPS:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>(batting_2018,hr<span class="sc">&gt;</span><span class="dv">45</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 23
+  Name  player_id  year   age    ab    pa   hit single double triple    hr     k
+  &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 khri…    501981  2018    30   576   654   142     65     28      1    48   175
+# ℹ 11 more variables: bb &lt;dbl&gt;, avg &lt;dbl&gt;, slg &lt;dbl&gt;, obp &lt;dbl&gt;, ops &lt;dbl&gt;,
+#   rbi &lt;dbl&gt;, tb &lt;dbl&gt;, sb &lt;dbl&gt;, g &lt;dbl&gt;, r &lt;dbl&gt;, AllStar &lt;fct&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>(batting_2018,hr<span class="sc">&lt;</span><span class="dv">20</span>,ops<span class="sc">&gt;</span><span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 23
+  Name  player_id  year   age    ab    pa   hit single double triple    hr     k
+  &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1 luke…    572228  2018    27   143   161    46     26      5      0    15    43
+# ℹ 11 more variables: bb &lt;dbl&gt;, avg &lt;dbl&gt;, slg &lt;dbl&gt;, obp &lt;dbl&gt;, ops &lt;dbl&gt;,
+#   rbi &lt;dbl&gt;, tb &lt;dbl&gt;, sb &lt;dbl&gt;, g &lt;dbl&gt;, r &lt;dbl&gt;, AllStar &lt;fct&gt;</code></pre>
+</div>
+</div>
+<p>Khris Davis had a stellar 2018 season that showcased his power as a designated hitter, leading the American League with 48 home runs. However, being a designated hitter may have hurt his chances at becoming an all star as position players are sought after more by fans than designated hitters. Also, a wildly popular designated hitter that played on another team in the American League, Shohei Ohtani, was rising to fame, so of course fans wanted him to showcase his abilities in the all star game. Luke Voit, a power-hitting first baseman, has the third highest OPS in my data set, but had an unfortunate setback during the 2018 season. He started the season on the St.&nbsp;Louis Cardinals, who had a star first baseman in Paul Goldschmidt, which limited Voit’s playing time. During the season though, Voit was traded to the Yankees where he was very successful at the plate. It is important to analyze outliers to see why they happen to determine how they may affect our modeling and even more so our predictions.</p>
+</section>
+<section id="motivation-and-context" class="level2">
+<h2 class="anchored" data-anchor-id="motivation-and-context">Motivation and Context</h2>
+<p>The motivation for any kind of data analysis in Major League Baseball is to provide insight to what players perform the best and why. Baseball is one of the few sports where failing makes up a large portion of the game. For example, a batting average above .250 is considered to be productive which implies a hitter reaching base by way of hit only a quarter of the time can lead to a successful career. Another example is that a hitter only reaches base on average about a third of the time. Not only is knowing how to measure success in baseball important, but that scale of success gives players a goal to aim for. Of course a data analyst can go down a rabbit hole and make predictions based on statistics convoluted and uninteresting, but using modeling and predictions based off of modeling modestly can help a player see what he needs to improve on based off of what the player and his peers have done well and not so well on.</p>
+</section>
+<section id="modeling" class="level2">
+<h2 class="anchored" data-anchor-id="modeling">Modeling</h2>
+<p>As previously mentioned, baseball data is highly correlated, but PCA summarizes a set predictors with a smaller number of representative principal components (PC’s) that explain most of the variance from the original set. In order to conduct PCA, we must first center our data, meaning we must scale our predictors to have mean 0. The chunk below is just ensuring each predictors’ observations are between 0 and 1. The standardizing (mean 0) will be done in a later step when setting the model up. Also note that <span class="math inline">\(n=\)</span>number of rows in my data set and <span class="math inline">\(p=\)</span>number of predictors in my data set.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>batting_stats <span class="ot">&lt;-</span> bat_train <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name=</span>Name,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg=</span>avg,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">slg=</span>slg,</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">obp=</span>obp,</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">ops=</span>ops,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">bbrate=</span>bb<span class="sc">/</span>pa,  </span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">krate=</span>k<span class="sc">/</span>pa, </span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">singlerate=</span>single<span class="sc">/</span>pa,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">doublerate=</span>double<span class="sc">/</span>pa,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">triplerate=</span>triple<span class="sc">/</span>pa,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">hrrate=</span>hr<span class="sc">/</span>pa,</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">rrate=</span>r<span class="sc">/</span>pa,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">rbirate=</span>rbi<span class="sc">/</span>pa,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">sbrate=</span>sb<span class="sc">/</span>pa</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>  ) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now PCA will take the above data as a matrix and compute its covariance matrix <span class="math inline">\(\Sigma\)</span></p>
+<p><span class="math display">\[
+\Sigma=\frac{1}{n-1}X^TX
+\]</span></p>
+<p>The next step is to find the eigenvalues and eigenvectors of <span class="math inline">\(\Sigma\)</span>. The eigenvectors will represent the loadings, or new axes, of the PC’s. The eigenvectors, <span class="math inline">\(v_1,v_2,\dots,v_p\)</span> are ordered based on the magnitude of their corresponding eigenvalues from largest to smallest and placed into a matrix <span class="math inline">\(W\)</span>:</p>
+<p><span class="math display">\[
+W=[v^T_1,v^T_2,\dots,v^T_p]
+\]</span></p>
+<p>Finally we obtain the scores of the PC’s which transform our data and allow it to be placed onto the new loading vectors. These are obtained by multiplying our eigenvector matrix with our original matrix which is shown by <span class="math inline">\(Z=WX\)</span>. Since eigenvectors of symmetric matrices <span class="math inline">\((\Sigma)\)</span> that correspond to distinct eigenvalues are orthogonal, this ensures there is no redundancy between PC’s. Also, based off of the way we ordered the eigenvectors in <span class="math inline">\(W\)</span>, the first PC will explain the biggest proportion of variance from the original predictors, the second PC the second biggest proportion, and so on and so forth. Hence PCA leaves us with a simplified set of predictors that still capture a majority of the variance explained. Multicollinearity, which refers to how interactive each predictor is to one another, is removed almost entirely due the loading vectors being orthogonal to each other, which allows us create a model without the fear of our predictors containing overlapping information which can cause overfitting.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>batting_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>.,<span class="at">data=</span>batting_stats</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">update_role</span>(Name,<span class="at">new_role=</span><span class="st">"id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_pca</span>(<span class="fu">all_predictors</span>(),<span class="at">num_comp =</span> <span class="dv">5</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>batting_prep <span class="ot">&lt;-</span> batting_recipe <span class="sc">|&gt;</span> <span class="fu">prep</span>()</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>batting_bake <span class="ot">&lt;-</span> batting_prep <span class="sc">|&gt;</span> <span class="fu">bake</span>(<span class="at">new_data=</span><span class="cn">NULL</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>batting_bake</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 313 × 6
+   Name             PC1       PC2     PC3    PC4    PC5
+   &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+ 1 nelsoncruz     -2.41  1.79      0.714  -0.164 -1.33 
+ 2 tylerwhite     -3.26  0.982    -0.0191 -0.511  0.631
+ 3 ronnyrodríguez  2.57  0.000348  1.21   -0.710 -0.449
+ 4 aaronjudge     -3.84  1.80     -0.655   1.57  -1.02 
+ 5 jeansegura     -1.30 -3.47      0.0797 -0.601 -0.839
+ 6 joséramírez    -4.63  0.520    -2.06    0.936  0.200
+ 7 adameaton      -1.97 -2.53     -0.280   1.35  -0.519
+ 8 ajosémartínez  -2.24 -1.35      1.94    0.359 -0.602
+ 9 ryanohearn     -4.37  2.96     -0.689  -0.670  1.04 
+10 sandyleón       3.91  1.31      0.672  -0.563  0.665
+# ℹ 303 more rows</code></pre>
+</div>
+</div>
+<p>An important thing to note in the code chunk above is the argument ‘num_comp’. This is telling R how many PC’s I would like to replace my predictors with. However, I will tune this parameter using the following scree plot, which will visually tell us how much variance is explained by the number of PC’s I choose to leave in the model.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>pve <span class="ot">&lt;-</span> <span class="fu">tidy</span>(batting_prep,<span class="dv">2</span>,<span class="at">type=</span><span class="st">"variance"</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data=</span>pve <span class="sc">|&gt;</span> <span class="fu">filter</span>(terms<span class="sc">==</span><span class="st">"cumulative percent variance"</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">mapping=</span><span class="fu">aes</span>(<span class="at">x=</span>component,<span class="at">y=</span>value)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">x=</span><span class="st">"Number of PCs"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">y=</span><span class="st">"Percentage of Variance Explained"</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/Scree Plot-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>I will choose to use 5 PC’S as they explain almost 90% of the variance from the data. The next plots will show how much each variable is contributing to each PC. From this, we can extrapolate what each PC is explaining, i.e.&nbsp;the types of players represented by each PC.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>loadings <span class="ot">&lt;-</span> <span class="fu">tidy</span>(batting_prep,<span class="dv">2</span>,<span class="at">type=</span><span class="st">"coef"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>loadings <span class="sc">|&gt;</span> <span class="fu">filter</span>(component <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"PC1"</span>,<span class="st">"PC2"</span>,<span class="st">"PC3"</span>,<span class="st">"PC4"</span>,<span class="st">"PC5"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">mapping=</span><span class="fu">aes</span>(<span class="at">x=</span>value,<span class="at">y=</span>terms,<span class="at">fill=</span><span class="fu">abs</span>(value))</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span> </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span> </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">"none"</span>) <span class="sc">+</span> </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_gradient</span>(<span class="at">low=</span><span class="st">"black"</span>,<span class="at">high=</span><span class="st">"red"</span>) <span class="sc">+</span> </span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="fu">vars</span>(component)) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/Plotting Loadings to See What Each PC is Explaining-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>PC1: heavily associated with all of the predictors except for ‘krate’, which tells us this PC is strongly correlated with overall offensive ability.</p>
+<p>PC2: note that krate, bbrate, and hrrate have moderate to high positive loadings while singlerate, sbrate, and avg have moderate to high negative loadings. Thus this PC is representative of the trade off between power hitters and speedy contact hitters.</p>
+<p>PC3: this PC has strong negative loadings for triplerate, rrate, and sbrate with slight positive loadings for doublerate, singlerate, and rbirate. This is indicative of speedy players who manufacture runs by way of stealing bases and hitting triples vs.&nbsp;players who contribute more traditionally through hitting singles and doubles and having many RBI’s.</p>
+<p>As we continue exploring how each predictor is related to the PC’s, we will notice that relationships become more and more subtle and specific, making them harder to interpret. This is do to the fact the the percentage of variance explained by the next PC will always be less than the previous one. Thus instead of having broader relationships such as power hitter vs.&nbsp;contact hitter, relationships may be more predictor-specific. For example, PC3 explained how speedy players score runs vs.&nbsp;how a traditional player with moderate speed contributes to runs scored.</p>
+<p>PC4: with high positive loadings for bbrate and obp and moderate negative loadings for triplerate, slg, and hrrate, this PC explains players with similar offense, but some derive value more from walks/on-base skills while others derive it from power production.</p>
+<p>PC5: this PC has very high positive loadings for doublerate and triplerate with a high negative loading for singlerate, showcasing a relationship between extra-base power vs.&nbsp;pure single hitters.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>batting_loadings <span class="ot">&lt;-</span> loadings <span class="sc">|&gt;</span> <span class="fu">pivot_wider</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">names_from=</span><span class="st">"component"</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">values_from=</span><span class="st">"value"</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">!</span>id)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> batting_bake, </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>             <span class="fu">aes</span>(<span class="at">x =</span> PC1, <span class="at">y =</span> PC2)) <span class="sc">+</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> Name),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">check_overlap =</span> <span class="cn">TRUE</span>) <span class="sc">+</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Principal Component Scores"</span>,</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"PC1 (Overall Offensive Ability)"</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"PC2 (Power vs. Contact)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a> <span class="fu">ggplot</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">data =</span> batting_loadings) <span class="sc">+</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_segment</span>(<span class="fu">aes</span>(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="dv">0</span>, <span class="at">y =</span> <span class="dv">0</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">xend =</span> PC1, <span class="at">yend =</span> PC2</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">arrow =</span> <span class="fu">arrow</span>(<span class="at">type =</span> <span class="st">"open"</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">x =</span> PC1,</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">y =</span> PC2,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">label =</span> terms),</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">check_overlap =</span> <span class="cn">TRUE</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Principal Component Loadings"</span>,</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>     <span class="at">x =</span> <span class="st">"PC1 (Overall Offensive Ability)"</span>,</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>     <span class="at">y =</span> <span class="st">"PC2 (Power vs. Contact)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The above two plots make up a biplot, a way of presenting both the principal component scores and loadings on the same graph. To avoid messiness, I plotted the scores on the first graph and the loadings on the second.</p>
+<p>Based off of the analysis of the PC’s, hitters on the far left are actual good hitters. Hitters at the top represent hitters that favor power while hitters at the bottom favor speed and contact hitting.</p>
+<p>Now that we have 5 uncorrelated predictors that explain an acceptable amount of variance from the original data, we can now fit a penalized logistic regression model on the training set with the PC’s and use that to make predictions of all star status on the test set. First I must add the the variable AllStar to my batting_bake data set in order to make that my response variable. Since we now have very few predictors, I will use Ridge Regression in order to keep all of the PC’s in the model.</p>
+<p>Now that we have analyzed what our PC’s look like, we can fit the logistic model.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>batting_train <span class="ot">&lt;-</span> <span class="fu">mutate</span>(batting_stats,<span class="at">AllStar=</span>bat_train<span class="sc">$</span>AllStar)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>batting_test <span class="ot">&lt;-</span> bat_test <span class="sc">|&gt;</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Name=</span>Name,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">avg=</span>avg,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">slg=</span>slg,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">obp=</span>obp,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">ops=</span>ops,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">bbrate=</span>bb<span class="sc">/</span>pa,  </span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">krate=</span>k<span class="sc">/</span>pa, </span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">singlerate=</span>single<span class="sc">/</span>pa,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">doublerate=</span>double<span class="sc">/</span>pa,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">triplerate=</span>triple<span class="sc">/</span>pa,</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">hrrate=</span>hr<span class="sc">/</span>pa,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">rrate=</span>r<span class="sc">/</span>pa,</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">rbirate=</span>rbi<span class="sc">/</span>pa,</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">sbrate=</span>sb<span class="sc">/</span>pa</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  ) </span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>batting_test <span class="ot">&lt;-</span> <span class="fu">mutate</span>(batting_test,<span class="at">AllStar=</span>bat_test<span class="sc">$</span>AllStar)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>log_model <span class="ot">&lt;-</span> <span class="fu">logistic_reg</span>(</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">mode=</span><span class="st">"classification"</span>,</span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">engine=</span><span class="st">"glmnet"</span>,</span>
+<span id="cb17-24"><a href="#cb17-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">penalty=</span><span class="fu">tune</span>(),</span>
+<span id="cb17-25"><a href="#cb17-25" aria-hidden="true" tabindex="-1"></a>  <span class="at">mixture=</span><span class="dv">0</span></span>
+<span id="cb17-26"><a href="#cb17-26" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-27"><a href="#cb17-27" aria-hidden="true" tabindex="-1"></a>log_recipe <span class="ot">&lt;-</span> <span class="fu">recipe</span>(</span>
+<span id="cb17-28"><a href="#cb17-28" aria-hidden="true" tabindex="-1"></a>  AllStar <span class="sc">~</span> Name <span class="sc">+</span> avg <span class="sc">+</span> slg <span class="sc">+</span> obp <span class="sc">+</span> ops <span class="sc">+</span> bbrate <span class="sc">+</span> krate <span class="sc">+</span> singlerate <span class="sc">+</span> doublerate <span class="sc">+</span> triplerate <span class="sc">+</span> hrrate <span class="sc">+</span> rrate <span class="sc">+</span> rbirate <span class="sc">+</span> sbrate,<span class="at">data=</span>batting_train</span>
+<span id="cb17-29"><a href="#cb17-29" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb17-30"><a href="#cb17-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">update_role</span>(Name,<span class="at">new_role=</span><span class="st">"id"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb17-31"><a href="#cb17-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_normalize</span>(<span class="fu">all_numeric_predictors</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb17-32"><a href="#cb17-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">step_pca</span>(<span class="fu">all_predictors</span>(),<span class="at">num_comp =</span> <span class="dv">5</span>) </span>
+<span id="cb17-33"><a href="#cb17-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb17-34"><a href="#cb17-34" aria-hidden="true" tabindex="-1"></a>log_wflow <span class="ot">&lt;-</span> <span class="fu">workflow</span>() <span class="sc">|&gt;</span> <span class="fu">add_model</span>(log_model) <span class="sc">|&gt;</span> <span class="fu">add_recipe</span>(log_recipe)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now I will tune the penalty term using 5-fold cross validation repeated twice. Using this method helps to reduce overfitting by averaging the performance across folds. The plots below will show how the metrics for predictive accuracy of a categorical variable varied across the different parameter choices the ‘tune_grid’ function searched over.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">814</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>bat_cv <span class="ot">&lt;-</span> <span class="fu">vfold_cv</span>(batting_train,<span class="at">v=</span><span class="dv">5</span>,<span class="at">repeats=</span><span class="dv">2</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>bat_tune <span class="ot">&lt;-</span> <span class="fu">tune_grid</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  log_wflow,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">resamples=</span>bat_cv,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid=</span><span class="fu">grid_regular</span>(<span class="fu">penalty</span>(<span class="fu">c</span>(<span class="sc">-</span><span class="dv">5</span>,<span class="dv">2</span>)),<span class="at">levels=</span><span class="dv">25</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="fu">autoplot</span>(bat_tune)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/Tune Logistic Model and Investigate Metrics-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>log_best <span class="ot">&lt;-</span> <span class="fu">select_best</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  bat_tune,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">metric=</span><span class="st">"brier_class"</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>log_best</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 2
+  penalty .config         
+    &lt;dbl&gt; &lt;chr&gt;           
+1 0.00001 pre0_mod01_post0</code></pre>
+</div>
+</div>
+<p>The below plot will show the regularization paths for coefficient, labeled with the predictor number in the fitted model, i.e.&nbsp;1=PC1, 2=PC2, etc. From right to left, the plot shows how the estimates of each of our predictors shrinks towards 0 as <span class="math inline">\(-Log(\lambda)\)</span> increases.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>log_final_wflow <span class="ot">&lt;-</span> <span class="fu">finalize_workflow</span>(log_wflow,<span class="at">parameters=</span>log_best)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>log_fit <span class="ot">&lt;-</span> <span class="fu">fit</span>(log_final_wflow,<span class="at">data=</span>batting_train)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>log_fit <span class="sc">|&gt;</span> <span class="fu">extract_fit_engine</span>() <span class="sc">|&gt;</span> </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="at">xvar=</span><span class="st">"lambda"</span>,<span class="at">label=</span>T)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="math-437-project-template_files/figure-html/Fit Model Using Best Metric-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Now we can finally get out the slope estimates of our logistic regression model and make predictions on all star status.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>log_coef <span class="ot">&lt;-</span> log_fit <span class="sc">|&gt;</span> <span class="fu">tidy</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'Matrix'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:tidyr':
+
+    expand, pack, unpack</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loaded glmnet 4.1-10</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(log_coef)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 3
+  term        estimate penalty
+  &lt;chr&gt;          &lt;dbl&gt;   &lt;dbl&gt;
+1 (Intercept)   -3.19  0.00001
+2 PC1           -0.676 0.00001
+3 PC2           -0.261 0.00001
+4 PC3            0.118 0.00001
+5 PC4            0.211 0.00001
+6 PC5           -0.477 0.00001</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>log_pred <span class="ot">&lt;-</span> <span class="fu">augment</span>(log_fit,<span class="at">new_data=</span>batting_test)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>log_pred</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 135 × 18
+   .pred_class .pred_No .pred_Yes Name        avg   slg   obp   ops bbrate krate
+   &lt;fct&gt;          &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+ 1 No             0.971   0.0292  gregallen 0.257 0.343 0.31  0.653 0.0481 0.199
+ 2 No             0.695   0.305   wilsonra… 0.306 0.487 0.358 0.845 0.0769 0.192
+ 3 No             0.898   0.102   marktrum… 0.261 0.452 0.313 0.765 0.0670 0.243
+ 4 No             0.980   0.0201  yangervi… 0.226 0.378 0.277 0.655 0.0613 0.142
+ 5 No             0.976   0.0242  toddfraz… 0.213 0.39  0.303 0.693 0.102  0.237
+ 6 No             0.830   0.170   edwinenc… 0.246 0.474 0.336 0.81  0.109  0.228
+ 7 No             0.994   0.00584 victorre… 0.222 0.288 0.239 0.527 0.0228 0.210
+ 8 No             0.889   0.111   djlemahi… 0.276 0.428 0.321 0.749 0.0637 0.141
+ 9 No             0.921   0.0793  coreysea… 0.267 0.396 0.348 0.744 0.0957 0.148
+10 No             0.846   0.154   shinsooc… 0.264 0.434 0.377 0.811 0.138  0.235
+# ℹ 125 more rows
+# ℹ 8 more variables: singlerate &lt;dbl&gt;, doublerate &lt;dbl&gt;, triplerate &lt;dbl&gt;,
+#   hrrate &lt;dbl&gt;, rrate &lt;dbl&gt;, rbirate &lt;dbl&gt;, sbrate &lt;dbl&gt;, AllStar &lt;fct&gt;</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">conf_mat</span>(log_pred,<span class="at">truth=</span>AllStar,<span class="at">estimate=</span>.pred_class)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          Truth
+Prediction  No Yes
+       No  123   8
+       Yes   2   2</code></pre>
+</div>
+</div>
+<p>Consider the estimate for PC1. We can interpret this as follows; a one-unit increase in PC1 decreases the log-odds of being an all star by 0.676. Does this make intuitive sense? Yes it does! recall that my PC1 had showed offensive prowess through negative loadings. Thus a higher a player’s PC1 scores are, the less likely it is for them to be an all star. Doing the same interpretation of the PC2 estimate, recall that PC2 had negative loadings for singlerate, sbrate, and avg while having positive loadings for krate, bbrate, and hrrate. Thus being a speedy contact hitter increases your chances of being an all star. Furthermore, the intercept also makes intuitive since it tells us that the log odds of being an all star is -3.19 when all PC’s are 0. Converting these log-odds into a probability, we see there is a 3.95% chance that a player is an all star on average while the PC’s are fixed at 0. This also makes sense due to the fact that all stars make up only 8% of the original data.</p>
+<p>When it came to the predictive power of the model, it did not do so well at predicting all stars. The model only predicted two true positives out of the 10 total all stars but did very well predicting non all stars as expected since there are so many more non all stars than all stars in the data. To be exact, there is a total of 38 all stars in the data, 28 in the training set and 10 in the test set.</p>
+</section>
+<section id="conclusion" class="level2">
+<h2 class="anchored" data-anchor-id="conclusion">Conclusion</h2>
+<p>In conclusion, I believe I answer my main question; which variables best explain how good a hitter really is. Through PCA, variables that showcase all around offensive ability such as batting average, slugging, home runs, on-base percentage, and the single and double rate are a lot more important in determining how good someone is at the plate than variables such as triple rate, stolen base rate, and strikeout rate. However, using PCA to summarize these variables using a smaller subset of principal components did not create a better model for predicting whether a player was an all star. Nevertheless, it was still worthwhile to see how data analysis could determine what players are better at different aspects of hitting.</p>
+<section id="limitations-and-future-work" class="level3">
+<h3 class="anchored" data-anchor-id="limitations-and-future-work">Limitations and Future Work</h3>
+<p>The model was poor at predicting all stars, with a sensitivity, or false positive rate, of only 20%. Since there were a lot more non all stars than all stars, I could have reduced the threshold for which someone is predicted to be an all star but for sake of showing how the base model did, I left the default value as is. The low sensitivity also could have been from information missed by using principal components from PCA in the model rather than the original predictors. Perhaps one way to improve the analysis could be to use a clustering method. It makes intuitive sense that clustering together hitters that are similar to each other could offer a better model to make predictions off of. When it comes to real world applications of the data I used and my findings through EDA, the particular data set I used is used every day by baseball analytic teams in order to see how players are improving and what they can do to improve. Furthermore, Principal Component Analysis proves to us what aspects of hitting are key to having success at the plate.</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
