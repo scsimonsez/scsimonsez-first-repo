@@ -6,8 +6,12 @@ website:
   navbar:
     title: Home
     right:
-      - text: Final Project
-        href: code_for_final.qmd
+      - text: Data Analysis Project
+        href: math-437-project-template.qmd
+      - text: Numerical Analysis Project
+        href: finalreport_sc.pdf
+      - text: Resume
+        href: Resume.pdf
 format:
   html:
     backgroundcolor: "#e6f2ff"

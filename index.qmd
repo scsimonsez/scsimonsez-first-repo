@@ -2,7 +2,7 @@
 title: "Simon Christensen"
 about:
   template: jolla
-  image: first_repo.jpeg
+  image: IMG_2722.JPG
   links:
     - icon: github
       text: GitHub
