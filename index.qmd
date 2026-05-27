@@ -7,6 +7,9 @@ about:
     - icon: github
       text: GitHub
       href: https://github.com/scsimonsez
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/simon-christensen-204796337/?enhance=null
 format:
   html:
     theme: cosmo
