@@ -12,6 +12,8 @@ website:
         href: finalreport_sc.pdf
       - text: Resume
         href: Resume.pdf
+      - text: Final Project
+        href: math-437-project-template.qmd
 format:
   html:
     backgroundcolor: "#e6f2ff"
