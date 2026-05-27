@@ -25,7 +25,21 @@
     "href": "index.html",
     "title": "Simon Christensen",
     "section": "",
-    "text": "My First Website!"
+    "text": "Welcome to my Website! A little bit about me and my life"
+  },
+  {
+    "objectID": "index.html#education",
+    "href": "index.html#education",
+    "title": "Simon Christensen",
+    "section": "Education",
+    "text": "Education\nCal State University, Fullerton |Fullerton, California | August 2023 - May 2026"
+  },
+  {
+    "objectID": "index.html#experience",
+    "href": "index.html#experience",
+    "title": "Simon Christensen",
+    "section": "Experience",
+    "text": "Experience\nIn-N-Out Burger | Associate - Level 6 (cook) | Jan 2023 - present"
   },
   {
     "objectID": "about.html",
