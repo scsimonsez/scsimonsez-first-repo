@@ -1,6 +1,8 @@
 project:
   type: website
   output-dir: docs
+resources:
+  - files/
 website:
   title: "Simon Christensen"
   navbar:
@@ -9,9 +11,9 @@ website:
       - text: Data Analysis Project
         href: math-437-project-template.qmd
       - text: Numerical Analysis Project
-        href: finalreport_sc.pdf
+        href: files/finalreport_sc.pdf
       - text: Resume
-        href: Resume.pdf
+        href: files/Resume.pdf
 format:
   html:
     backgroundcolor: "#e6f2ff"
